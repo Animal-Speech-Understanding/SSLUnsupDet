@@ -50,7 +50,7 @@
         "batch_size": 64,
         "epochs": 50,
         "verbose": 1,
-        "device": "cuda",
+        "device": "cpu",
         "scheduler" : null,
         "params": {
             "model_saver_callback": {

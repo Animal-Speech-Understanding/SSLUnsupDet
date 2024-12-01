@@ -4,7 +4,7 @@ import numpy as np
 import librosa
 import random
 import tqdm
-import re
+import os
 
 """
 def collate_pad(batch, padding=-1):
@@ -141,7 +141,7 @@ def seed_everything(seed):
     torch.backends.cudnn.benchmark = False
     
 def get_filename(wav):
-    return re.split(r'\\', wav)[-1][:-4]
+    return os.path.splitext(os.path.basename(wav))[0]
     
 class ArchitectureBuilder(object):
     
@@ -196,6 +196,31 @@ def sample_to_time(sample, sample_rate):
     return sample / sample_rate
 
 def coarsen_selections(onsets, offsets, threshold):
+    """
+    Coarsens signal selections by merging signals that are closer together than the specified threshold.
+
+    This function modifies the input `onsets` and `offsets` arrays by identifying pairs of signals 
+    where the gap between the end of one signal and the start of the next is smaller than the 
+    specified `threshold`. It removes redundant signals by merging these pairs.
+
+    Args:
+        onsets (np.ndarray): Array of start times for the signals (in seconds).
+        offsets (np.ndarray): Array of end times for the signals (in seconds).
+        threshold (float): The minimum gap (in seconds) between signals. Signals closer together than 
+            this threshold are merged.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: 
+            - Updated `onsets` array with redundant start times removed.
+            - Updated `offsets` array with redundant end times removed.
+
+    Example:
+        >>> onsets = np.array([1.0, 2.5, 5.0])
+        >>> offsets = np.array([2.0, 4.0, 6.0])
+        >>> threshold = 1.0
+        >>> coarsen_selections(onsets, offsets, threshold)
+        (array([1.0, 5.0]), array([2.0, 6.0]))
+    """
     deltas = onsets[1:] - offsets[:-1]
     offset_indices = np.where(deltas < threshold)[0]
     onset_indices = offset_indices + 1

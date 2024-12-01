@@ -52,6 +52,6 @@ class SpermWhaleClicks(Dataset):
                             sr=self.sample_rate)
         window_frames = int(self.window * self.sample_rate) + self.window_pad
         assert x.shape[0] >= window_frames
-        x = librosa.util.fix_length(x, window_frames)
+        x = librosa.util.fix_length(data=x, size=window_frames)
         x = torch.tensor(x).unsqueeze(dim=0)
         return x, x

@@ -3,20 +3,20 @@
 # SSLUnsupDet/dataset.py: 5
 # SSLUnsupDet/inference.py: 10
 # SSLUnsupDet/preprocess.py: 4
-SoundFile == 0.10.3.post1
+SoundFile
 
 # SSLUnsupDet/PyFire.py: 5
-ipython == 7.29.0
+ipython
 
 # SSLUnsupDet/dataset.py: 6
 # SSLUnsupDet/inference.py: 6
 # SSLUnsupDet/preprocess.py: 3
 # SSLUnsupDet/utils.py: 4
-librosa == 0.9.2
+librosa
 
 # SSLUnsupDet/PyFire.py: 6
 # SSLUnsupDet/preprocess.py: 2
-matplotlib == 3.4.3
+matplotlib
 
 # SSLUnsupDet/PyFire.py: 8
 # SSLUnsupDet/dataset.py: 4
@@ -27,18 +27,18 @@ matplotlib == 3.4.3
 # SSLUnsupDet/peak_detect.py: 7
 # SSLUnsupDet/preprocess.py: 1
 # SSLUnsupDet/utils.py: 3
-numpy == 1.20.3
+numpy
 
 # SSLUnsupDet/PyFire.py: 7
 # SSLUnsupDet/energy_detect.py: 6
 # SSLUnsupDet/inference.py: 9
 # SSLUnsupDet/peak_detect.py: 8
 # SSLUnsupDet/results.py: 6
-pandas == 1.4.1
+pandas
 
 # SSLUnsupDet/energy_detect.py: 7
 # SSLUnsupDet/peak_detect.py: 9
-scipy == 1.7.1
+scipy
 
 # SSLUnsupDet/PyFire.py: 1,2,3
 # SSLUnsupDet/dataset.py: 1,2
@@ -49,11 +49,11 @@ scipy == 1.7.1
 # SSLUnsupDet/models.py: 1,2,3
 # SSLUnsupDet/train.py: 4
 # SSLUnsupDet/utils.py: 1,2
-torch == 1.11.0
+torch
 
 # SSLUnsupDet/PyFire.py: 10
 # SSLUnsupDet/inference.py: 4
 # SSLUnsupDet/layers.py: 6
 # SSLUnsupDet/peak_detect.py: 5
 # SSLUnsupDet/utils.py: 6
-tqdm == 4.62.3
+tqdm

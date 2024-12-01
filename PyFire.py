@@ -110,7 +110,7 @@ class Trainer(object):
 			ckpt_path = ckpts[-1]
 			print(f'Loading ckpt: {ckpt_path}\n')
 			ckpt = torch.load(ckpt_path, 
-							  map_location=self.device)
+							  map_location=self.device, weights_only=True)
 			self.model.load_state_dict(ckpt['model_state_dict'])
 			self.optimizer.load_state_dict(ckpt['optimizer_state_dict'])
 			loss_history_train = ckpt['train_losses']

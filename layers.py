@@ -215,13 +215,13 @@ class MLP(nn.Module):
         self.linear_projection = linear_projection
 
         if self.linear_projection:
-            layers = [nn.Dropout2d(self.dropout),
+            layers = [nn.Dropout1d(self.dropout),
                       nn.Linear(self.in_dimension, self.out_dimension)]
         else:
-            layers = [nn.Dropout2d(self.dropout),
+            layers = [nn.Dropout1d(self.dropout),
                       nn.Linear(self.in_dimension, self.in_dimension),
                       nn.LeakyReLU(),
-                      nn.Dropout2d(self.dropout),
+                      nn.Dropout1d(self.dropout),
                       nn.Linear(self.in_dimension, self.out_dimension)]
         self.net = nn.Sequential(*layers)
 
