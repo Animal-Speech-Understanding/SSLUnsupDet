@@ -57,3 +57,8 @@ torch
 # SSLUnsupDet/peak_detect.py: 5
 # SSLUnsupDet/utils.py: 6
 tqdm
+
+
+tensorboard
+pytorch_lightning
+torchmetrics

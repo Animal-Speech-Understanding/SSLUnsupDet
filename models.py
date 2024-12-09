@@ -86,7 +86,7 @@ class SpectralBoundaryEncoder(nn.Module):
         activation_map = {
             'tanh': nn.Tanh(),
             'sigmoid': nn.Sigmoid(),
-            'hardtanh': nn.HardTanh(),
+            'hardtanh': nn.Hardtanh(),
         }
         if activation.lower() in activation_map:
             return activation_map[activation.lower()]
