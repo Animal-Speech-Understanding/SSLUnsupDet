@@ -1,49 +1,74 @@
-# peak_detect.py
-
-import re
-import os
+import argparse
 import glob
 import json
+import logging
+import multiprocessing as mp
+import os
+import re
 from typing import Dict, List, Tuple
-import tqdm
-import argparse
+
 import numpy as np
 import pandas as pd
+import tqdm
 from scipy.signal import find_peaks
-import multiprocessing as mp
-import logging
 
-from utils import *
-from metrics import *
-from logging_config import setup_logging, get_logger
+from logging_config import get_logger, setup_logging
+from metrics import PRF1Metric
+from utils import coarsen_selections, frame_to_time
 
 # Global variable for PRF1Metrics to avoid passing it to each process
 global_prf1metrics = None
 
+
 def parse_arguments() -> Dict:
     """Parses command-line arguments."""
-    parser = argparse.ArgumentParser(description="Process distance files with peak detection.")
-    parser.add_argument('-c', '--config', type=str, required=True,
-                        help='JSON file for configuration')
-    parser.add_argument('-q', '--use_q', type=int, choices=[0, 1],
-                        help='Use uncertain (q) selection tables (0 or 1)', default=1)
-    parser.add_argument('-ckpt', '--checkpoint', type=int, required=True,
-                        help='Choose the model checkpoint')
-    parser.add_argument('-s', '--search', type=str, choices=['coarse', 'fine'], required=True,
-                        help='Choose the search regime (e.g., coarse or fine)')
+    parser = argparse.ArgumentParser(
+        description="Process distance files with peak detection."
+    )
+    parser.add_argument(
+        "-c", "--config", type=str, required=True, help="JSON file for configuration"
+    )
+    parser.add_argument(
+        "-q",
+        "--use_q",
+        type=int,
+        choices=[0, 1],
+        help="Use uncertain (q) selection tables (0 or 1)",
+        default=1,
+    )
+    parser.add_argument(
+        "-ckpt",
+        "--checkpoint",
+        type=int,
+        required=True,
+        help="Choose the model checkpoint",
+    )
+    parser.add_argument(
+        "-s",
+        "--search",
+        type=str,
+        choices=["coarse", "fine"],
+        required=True,
+        help="Choose the search regime (e.g., coarse or fine)",
+    )
     args = parser.parse_args()
     return vars(args)  # Return as a dictionary for easier access
+
 
 def initialize_metrics(tolerance: List[float]) -> List[PRF1Metric]:
     """Initializes PRF1Metric objects for each tolerance level."""
     return [PRF1Metric(tolerance=t) for t in tolerance]
+
 
 def load_config(config_path: str) -> Dict:
     """Loads the JSON configuration file."""
     with open(config_path) as f:
         return json.load(f)
 
-def find_selection_table(filename: str, use_q: bool, logger: logging.Logger) -> Tuple[pd.DataFrame, str]:
+
+def find_selection_table(
+    filename: str, use_q: bool, logger: logging.Logger
+) -> Tuple[pd.DataFrame, str]:
     """
     Finds and loads the selection table for a given filename.
 
@@ -59,19 +84,24 @@ def find_selection_table(filename: str, use_q: bool, logger: logging.Logger) -> 
     q_suffix = ""
     if use_q:
         q_path = f"{base_path}.q.selections.txt"
-        selections_path = q_path if os.path.exists(q_path) else f"{base_path}.selections.txt"
+        selections_path = (
+            q_path if os.path.exists(q_path) else f"{base_path}.selections.txt"
+        )
         q_suffix = ".q" if os.path.exists(q_path) else ""
     else:
         selections_path = f"{base_path}.selections.txt"
-    
+
     if os.path.exists(selections_path):
         logger.info(f"Loaded selection table: {selections_path}")
-        return pd.read_csv(selections_path, sep='\t'), q_suffix
+        return pd.read_csv(selections_path, sep="\t"), q_suffix
     else:
         logger.warning(f"No selection table found for {filename}")
         return None, ""
 
-def process_selection_table(selections_table: pd.DataFrame, coarsen: List[float], logger: logging.Logger) -> Dict:
+
+def process_selection_table(
+    selections_table: pd.DataFrame, coarsen: List[float], logger: logging.Logger
+) -> Dict:
     """
     Processes the selection table to extract and coarsen onsets and offsets.
 
@@ -83,12 +113,18 @@ def process_selection_table(selections_table: pd.DataFrame, coarsen: List[float]
     Returns:
         Dict: Processed onsets, offsets, and midpoints.
     """
-    assert selections_table.View.iloc[0] == 'Waveform 1', "First View should be 'Waveform 1'"
-    assert selections_table.View.iloc[1] == 'Spectrogram 1', "Second View should be 'Spectrogram 1'"
+    assert (
+        selections_table.View.iloc[0] == "Waveform 1"
+    ), "First View should be 'Waveform 1'"
+    assert (
+        selections_table.View.iloc[1] == "Spectrogram 1"
+    ), "Second View should be 'Spectrogram 1'"
 
-    selections_table = selections_table[::2].reset_index(drop=True)  # Skip alternate rows
-    begin_times = selections_table['Begin Time (s)'].to_numpy()
-    end_times = selections_table['End Time (s)'].to_numpy()
+    selections_table = selections_table[::2].reset_index(
+        drop=True
+    )  # Skip alternate rows
+    begin_times = selections_table["Begin Time (s)"].to_numpy()
+    end_times = selections_table["End Time (s)"].to_numpy()
 
     onsets = {0: begin_times}
     offsets = {0: end_times}
@@ -100,7 +136,10 @@ def process_selection_table(selections_table: pd.DataFrame, coarsen: List[float]
     logger.debug(f"Processed selection table with coarsen thresholds: {coarsen}")
     return {"onsets": onsets, "offsets": offsets, "midpoints": midpoints}
 
-def detect_peaks(distance: np.ndarray, min_prominence: float) -> Tuple[np.ndarray, np.ndarray]:
+
+def detect_peaks(
+    distance: np.ndarray, min_prominence: float
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Detects peaks in the distance signal based on a minimum prominence.
 
@@ -115,8 +154,18 @@ def detect_peaks(distance: np.ndarray, min_prominence: float) -> Tuple[np.ndarra
     prominences = properties["prominences"]
     return pks, prominences
 
-def process_distance_file(wav_distance: str, prominence_list: List[float], coarsen: List[float],
-                         hop_length: int, sample_rate: int, save_dir: str, ckpt: int, search: str, use_q: bool):
+
+def process_distance_file(
+    wav_distance: str,
+    prominence_list: List[float],
+    coarsen: List[float],
+    hop_length: int,
+    sample_rate: int,
+    save_dir: str,
+    ckpt: int,
+    search: str,
+    use_q: bool,
+):
     """
     Processes a single distance file to compute and save metrics.
 
@@ -137,26 +186,28 @@ def process_distance_file(wav_distance: str, prominence_list: List[float], coars
     logger = logging.getLogger()
 
     try:
-        filename = re.findall(r'\d+\w+', wav_distance)[0]
+        filename = re.findall(r"\d+\w+", wav_distance)[0]
     except IndexError:
         logger.error(f"Filename extraction failed for {wav_distance}")
         return
 
     selections_table, q_suffix = find_selection_table(filename, use_q, logger)
-    
+
     if selections_table is None:
         return
 
-    wav_save_path = f"{save_dir}/Inference/{filename}/predictions_ckpt{ckpt}_{search}{q_suffix}.pkl"
-    
+    wav_save_path = (
+        f"{save_dir}/Inference/{filename}/predictions_ckpt{ckpt}_{search}{q_suffix}.pkl"
+    )
+
     if os.path.exists(wav_save_path):
         logger.info(f"Results already exist: {wav_save_path}")
-        return      
+        return
 
-    processed_data = process_selection_table(selections_table, coarsen, logger)    
+    processed_data = process_selection_table(selections_table, coarsen, logger)
     onsets = processed_data["onsets"]
     midpoints = processed_data["midpoints"]
-    
+
     N_signal = {k: len(v) for k, v in onsets.items()}
 
     try:
@@ -169,38 +220,54 @@ def process_distance_file(wav_distance: str, prominence_list: List[float], coars
     distances_table["Alphas"] = distances_table["Alphas"].round(2)
     distances_table["Betas"] = distances_table["Betas"].round(2)
     distances_table["SmoothDurations"] = distances_table["SmoothDurations"].round(2)
-    
+
     results = []
-    
+
     # Determine the minimum prominence needed
     min_prominence = min(prominence_list)
-    
+
     # Iterate through each row using itertuples for better performance
     for row in distances_table.itertuples(index=False):
         distance = row.Distances
         all_pks, all_prominences = detect_peaks(distance, min_prominence)
-        
+
         # For each prominence threshold, filter peaks
         for p in prominence_list:
             # Get peaks that meet the current prominence threshold
             valid_indices = all_prominences >= p
             pks = all_pks[valid_indices]
-            
+
             detections = frame_to_time(pks, hop_length, sample_rate)
 
-            preds_wrt_onsets = {c:{prf1.tolerance:prf1.classify_predictions(onset_times, detections) for prf1 in global_prf1metrics} for c, onset_times in onsets.items()}
-            preds_wrt_midpoints = {c:{prf1.tolerance:prf1.classify_predictions(midpoint_times, detections) for prf1 in global_prf1metrics} for c, midpoint_times in midpoints.items()}
+            preds_wrt_onsets = {
+                c: {
+                    prf1.tolerance: prf1.classify_predictions(onset_times, detections)
+                    for prf1 in global_prf1metrics
+                }
+                for c, onset_times in onsets.items()
+            }
+            preds_wrt_midpoints = {
+                c: {
+                    prf1.tolerance: prf1.classify_predictions(
+                        midpoint_times, detections
+                    )
+                    for prf1 in global_prf1metrics
+                }
+                for c, midpoint_times in midpoints.items()
+            }
 
-            results.append({
-                "Alphas": row.Alphas,
-                "Betas": row.Betas,
-                "SmoothDurations": row.SmoothDurations,
-                "Prominence": p,
-                "N_signals": N_signal,
-                "N_detections": len(detections),
-                "OnsetPreds{coarsen:{tol:(TP,FN,FP)}}": preds_wrt_onsets,
-                "MidpointPreds{coarsen:{tol:(TP,FN,FP)}}": preds_wrt_midpoints
-            })
+            results.append(
+                {
+                    "Alphas": row.Alphas,
+                    "Betas": row.Betas,
+                    "SmoothDurations": row.SmoothDurations,
+                    "Prominence": p,
+                    "N_signals": N_signal,
+                    "N_detections": len(detections),
+                    "OnsetPreds{coarsen:{tol:(TP,FN,FP)}}": preds_wrt_onsets,
+                    "MidpointPreds{coarsen:{tol:(TP,FN,FP)}}": preds_wrt_midpoints,
+                }
+            )
 
     try:
         df = pd.DataFrame(results)
@@ -209,9 +276,11 @@ def process_distance_file(wav_distance: str, prominence_list: List[float], coars
     except Exception as e:
         logger.error(f"Failed to save results to {wav_save_path}: {e}")
 
+
 def process_distance_file_wrapper(args):
     """Wrapper function to unpack arguments for multiprocessing."""
     return process_distance_file(*args)
+
 
 def init_worker(prf1metrics_init, log_queue: mp.Queue):
     """Initializer for each worker process to set global variables and logging."""
@@ -220,35 +289,40 @@ def init_worker(prf1metrics_init, log_queue: mp.Queue):
     # Setup logger for the worker
     get_logger(log_queue)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Setup logging in the main process
     log_queue, listener = setup_logging("logs", base_filename="peak_detect")
     logger = get_logger(log_queue)
-    
+
     try:
         args = parse_arguments()
-        
-        use_q = True if args['use_q'] == 1 else False
-        ckpt = args['checkpoint']
+
+        use_q = True if args["use_q"] == 1 else False
+        ckpt = args["checkpoint"]
 
         config = load_config(f"configs/{args['config']}")
         logger.info(f"Loaded configuration from {args['config']}")
 
-        save_dir = config['utils']['save_dir']
-        hop_length = config['model']['transform_params']['params']['stride']
-        sample_rate = config['dataset']['sample_rate']
-        tolerance = config['metrics']['tolerance']
-        coarsen = config['metrics']['coarsen']
-        
-        search = args['search']
-        assert search in ['coarse', 'fine'], "Search regime must be 'coarse' or 'fine'"
-        prominence = sorted(range_step(config['detection'][search]['prominence']))  # Ensure ascending order
+        save_dir = config["utils"]["save_dir"]
+        hop_length = config["model"]["transform_params"]["params"]["stride"]
+        sample_rate = config["dataset"]["sample_rate"]
+        tolerance = config["metrics"]["tolerance"]
+        coarsen = config["metrics"]["coarsen"]
+
+        search = args["search"]
+        assert search in ["coarse", "fine"], "Search regime must be 'coarse' or 'fine'"
+        prominence = sorted(
+            np.arange(config["detection"][search]["prominence"])
+        )  # Ensure ascending order
 
         prf1metrics = initialize_metrics(tolerance)
         logger.info(f"Initialized PRF1 metrics with tolerance levels: {tolerance}")
 
-        wav_distances = sorted(glob.glob(f'{save_dir}/Inference/*/distances_ckpt{ckpt}_{search}.pkl'))
-        
+        wav_distances = sorted(
+            glob.glob(f"{save_dir}/Inference/*/distances_ckpt{ckpt}_{search}.pkl")
+        )
+
         if not wav_distances:
             logger.error("No distance files found.")
             raise Exception("No distance files found.")
@@ -256,21 +330,37 @@ if __name__ == '__main__':
             logger.info(f"Found {len(wav_distances)} distance files to process.")
 
         args_list = [
-            (wav_distance, prominence, coarsen, hop_length, sample_rate, 
-             save_dir, ckpt, search, use_q)
+            (
+                wav_distance,
+                prominence,
+                coarsen,
+                hop_length,
+                sample_rate,
+                save_dir,
+                ckpt,
+                search,
+                use_q,
+            )
             for wav_distance in wav_distances
         ]
 
         num_cpus = mp.cpu_count()
         logger.info(f"Starting processing with {num_cpus} CPU cores.")
 
-        with mp.Pool(processes=num_cpus, initializer=init_worker, initargs=(prf1metrics, log_queue)) as pool:
+        with mp.Pool(
+            processes=num_cpus,
+            initializer=init_worker,
+            initargs=(prf1metrics, log_queue),
+        ) as pool:
             # Use tqdm to display a progress bar
-            list(tqdm.tqdm(pool.imap_unordered(
-                process_distance_file_wrapper,
-                args_list
-            ), total=len(args_list), desc="Processing Distance Files"))
-        
+            list(
+                tqdm.tqdm(
+                    pool.imap_unordered(process_distance_file_wrapper, args_list),
+                    total=len(args_list),
+                    desc="Processing Distance Files",
+                )
+            )
+
         logger.info("Processing completed successfully.")
 
     except Exception as e:
