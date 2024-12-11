@@ -18,7 +18,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-c", "--config", type=str, help="JSON file for configuration")
-    parser.add_argument("-ckpt", "--checkpoint", type=int, help="choose the model ckpt")
+    # parser.add_argument("-ckpt", "--checkpoint", type=int, help="choose the model ckpt")
     parser.add_argument(
         "-s",
         "--search",
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     config = args.config
-    ckpt = args.checkpoint
+    # ckpt = args.checkpoint
     search = args.search
     assert search in ["coarse", "fine"]
 
@@ -51,11 +51,29 @@ if __name__ == "__main__":
 
     model = SpectralBoundaryEncoder(**model_params)
     model.to(device)
-    model.load_state_dict(
-        torch.load(f"{save_dir}/Checkpoints/ckpt{ckpt}.pth.tar", map_location=device)[
-            "model_state_dict"
-        ]
-    )
+    if os.path.isdir(f"{save_dir}/models"):
+        model.load_state_dict(
+            torch.load(f"{save_dir}/models/final_model.pt", map_location=device, weights_only=True)
+        )
+    else:
+        checkpoint = torch.load(f"{save_dir}/checkpoints/best-checkpoint.ckpt", map_location=device)
+
+        # Handle the state_dict key
+        if 'state_dict' in checkpoint:
+            state_dict = checkpoint['state_dict']
+        elif 'model_state_dict' in checkpoint:
+            state_dict = checkpoint['model_state_dict']
+        else:
+            state_dict = checkpoint  # If it's directly the state_dict
+        from collections import OrderedDict
+        # Handle unexpected key prefixes
+        new_state_dict = OrderedDict()
+        for k, v in state_dict.items():
+            name = k.replace("model.", "")  # Remove prefix if needed
+            new_state_dict[name] = v
+
+        # Load the state_dict into the model
+        model.load_state_dict(new_state_dict)
     model.eval()
     print("Loaded Model")
 
@@ -63,9 +81,9 @@ if __name__ == "__main__":
         os.mkdir(f"{save_dir}/Inference")
     print("Made Inference Directory")
 
-    alpha = np.arange(inference_params[search]["alpha"])
-    beta = np.arange(inference_params[search]["beta"])
-    smooth_duration = np.arange(inference_params[search]["smooth_duration"])
+    alpha = np.arange(*inference_params[search]["alpha"])
+    beta = np.arange(*inference_params[search]["beta"])
+    smooth_duration = np.arange(*inference_params[search]["smooth_duration"])
     if smooth_duration[0] == 0:
         smooth_duration[0] = 1
 
@@ -114,7 +132,7 @@ if __name__ == "__main__":
             }
         )
         df.to_pickle(
-            f"{save_dir}/Inference/{filename}/distances_ckpt{ckpt}_{search}.pkl"
+            f"{save_dir}/Inference/{filename}/distances_{search}.pkl"
         )
 
         D = gen_spec(
@@ -132,7 +150,7 @@ if __name__ == "__main__":
         np.save(f"{save_dir}/Inference/{filename}/spectrogram.npy", D)
         np.save(f"{save_dir}/Inference/{filename}/spectrogram_res.npy", D_res)
         np.save(
-            f"{save_dir}/Inference/{filename}/sbgram_ckpt{ckpt}.npy",
+            f"{save_dir}/Inference/{filename}/sbgram.npy",
             z.squeeze().numpy().T,
         )
         print(f"Saved for {filename}")

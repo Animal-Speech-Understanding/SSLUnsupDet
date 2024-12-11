@@ -18,8 +18,6 @@ class SpectralBoundaryLightningModule(pl.LightningModule):
         metric_funcs: dict[str, Callable] | None = None,
         multi_loss_weights: list | None = None,
         regularizer: dict[str, Any] | None = None,
-        weights_func: Callable[[list, int], list] | None = None,
-        switcher: dict[str, Any] | None = None,
     ):
         super(SpectralBoundaryLightningModule, self).__init__()
 
@@ -60,17 +58,11 @@ class SpectralBoundaryLightningModule(pl.LightningModule):
         else:
             self.lambda_factor = 0.0
 
-        # Optimizer, scheduler, and switcher
+        # Optimizer, scheduler
         self.optimizer_cls = optimizer_cls
         self.optimizer_params = optimizer_params
         self.scheduler_cls = scheduler_cls
         self.scheduler_params = scheduler_params
-        self.switcher = switcher
-        self.current_epoch_switch = switcher["epoch"] if switcher else None
-        self.new_optimizer_cls = switcher["optimizer"] if switcher else None
-
-        # Weights function
-        self.weights_func = weights_func
 
         # Initialize a list to keep track of epoch-level metrics if needed
         self.train_metrics_history = (
@@ -85,7 +77,7 @@ class SpectralBoundaryLightningModule(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = self.optimizer_cls(
-            self.parameters(), **self.hparams.optimizer_params
+            self.parameters(), **self.optimizer_params
         )
         schedulers = []
         if self.scheduler_cls and self.scheduler_params:
@@ -104,13 +96,13 @@ class SpectralBoundaryLightningModule(pl.LightningModule):
             loss_dict[key] = loss
             total_loss += loss
 
-        # L2 Regularization
-        if self.lambda_factor > 0:
-            l2_reg = self.lambda_factor * sum(
-                p.pow(2.0).sum() for p in self.model.parameters()
-            )
-            loss_dict["L2_reg"] = l2_reg
-            total_loss += l2_reg
+        # # L2 Regularization
+        # if self.lambda_factor > 0:
+        #     l2_reg = self.lambda_factor * sum(
+        #         p.pow(2.0).sum() for p in self.model.parameters()
+        #     )
+        #     loss_dict["L2_reg"] = l2_reg
+        #     total_loss += l2_reg
 
         self.log(
             "train/total_loss",
@@ -158,13 +150,13 @@ class SpectralBoundaryLightningModule(pl.LightningModule):
             loss_dict[key] = loss
             total_loss += loss
 
-        # L2 Regularization (optional in validation)
-        if self.lambda_factor > 0:
-            l2_reg = self.lambda_factor * sum(
-                p.pow(2.0).sum() for p in self.model.parameters()
-            )
-            loss_dict["L2_reg"] = l2_reg
-            total_loss += l2_reg
+        # # L2 Regularization (optional in validation)
+        # if self.lambda_factor > 0:
+        #     l2_reg = self.lambda_factor * sum(
+        #         p.pow(2.0).sum() for p in self.model.parameters()
+        #     )
+        #     loss_dict["L2_reg"] = l2_reg
+        #     total_loss += l2_reg
 
         self.log(
             "val/total_loss",
@@ -198,26 +190,6 @@ class SpectralBoundaryLightningModule(pl.LightningModule):
                 )
                 # Optionally, store metrics for epoch_end
                 self.val_metrics_history[key].append(metric)
-
-    def on_epoch_end(self):
-        # Handle optimizer switching if specified
-        if self.switcher and self.current_epoch_switch == self.current_epoch:
-            optimizer = self.optimizers()
-            new_optimizer = self.new_optimizer_cls(self.model.parameters())
-            self.trainer.replace_optimizer(new_optimizer)
-            self.current_epoch_switch = None  # Prevent multiple switches
-            self.log(
-                "info",
-                f"Optimizer switched to {self.new_optimizer_cls.__name__}",
-                on_epoch=True,
-            )
-
-        # Update loss weights if weights_func is provided
-        if self.weights_func:
-            self.multi_loss_weights = self.weights_func(
-                self.multi_loss_weights, self.current_epoch
-            )
-            self.log_hyperparams({"multi_loss_weights": self.multi_loss_weights})
 
     def on_train_epoch_end(self):
         # Example: Log average metrics over the epoch

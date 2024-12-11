@@ -2,14 +2,15 @@
 *.ipynb
 __pycache__/*
 __pycache__
-PipelineV0
 data
 view_selections.py
 
 .venv
 .python-version
 
-PipeLine
-conv_baseline
-
 logs
+
+*.npy
+*.pth
+*.pt
+*.ckpt

@@ -105,8 +105,8 @@ def main():
     elif optimizer_name == "adam":
         optimizer_cls = optim.Adam
         optimizer_params = {
-            "lr": optimizer_config["learning_rate"],
-            "weight_decay": optimizer_config.get("weight_decay", 0.0),
+            # "lr": optimizer_config["learning_rate"],
+            # "weight_decay": optimizer_config.get("weight_decay", 0.0),
         }
     else:
         raise ValueError(f"Unsupported optimizer name: {optimizer_config['name']}")
@@ -130,7 +130,7 @@ def main():
         scheduler_params = None
 
     # Initialize loss function
-    n_negatives = training_params.get("n_negatives", 1)
+    n_negatives = training_params.get("n_negatives", 2)
     print(f"n_negatives: {n_negatives}")
 
     nce_loss = NoiseContrastiveEstimationLoss(n_negatives=n_negatives)
@@ -160,10 +160,6 @@ def main():
         scheduler_params=scheduler_params,
         loss_funcs=loss_funcs,
         metric_funcs=metric_funcs,
-        multi_loss_weights=training_params.get("multi_loss_weights", [1.0]),
-        regularizer=training_params.get("regularizer", None),
-        weights_func=training_params.get("weights_func", None),
-        switcher=training_params.get("switcher", None),
     )
 
     # Define Callbacks

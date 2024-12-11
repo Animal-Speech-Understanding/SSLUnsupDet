@@ -29,7 +29,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-hpf", "--use_hpf", type=int, help="use high pass filter (0 or 1)", default=0
     )
-    parser.add_argument("-ckpt", "--checkpoint", type=int, help="choose the model ckpt")
+    # parser.add_argument("-ckpt", "--checkpoint", type=int, help="choose the model ckpt")
     parser.add_argument(
         "-s",
         "--search",
@@ -49,11 +49,11 @@ if __name__ == "__main__":
     use_q = True if args.use_q == 1 else False
     base_path = config["dataset"]["wavs_path"][:-6]
 
-    ckpt = args.checkpoint
+    # ckpt = args.checkpoint
     search = args.search
     assert search in ["coarse", "fine"]
 
-    prominence = np.arange(config["energy_baseline"][search]["prominence"])
+    prominence = np.arange(*config["energy_baseline"][search]["prominence"])
     sample_rate = config["dataset"]["sample_rate"]
     tolerance = config["metrics"]["tolerance"]
     coarsen = config["metrics"]["coarsen"]
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     prf1metrics = [PRF1Metric(tolerance=t) for t in tolerance]
 
     inference_wavs = sorted(
-        glob.glob(f"{save_dir}/Inference/*/predictions_ckpt{ckpt}_{search}*.pkl")
+        glob.glob(f"{save_dir}/Inference/*/predictions_{search}*.pkl")
     )
     inference_wavs = [re.findall("\d+\w+", w)[0] for w in inference_wavs]
 
@@ -102,7 +102,7 @@ if __name__ == "__main__":
                 selections_table = None
 
         if selections_table is not None:
-            wav_save_path = f"{save_dir}/Inference/{wav}/energy_{hpf_str}predictions_ckpt{ckpt}_{search}{q}.pkl"
+            wav_save_path = f"{save_dir}/Inference/{wav}/energy_{hpf_str}predictions_{search}{q}.pkl"
             if not os.path.exists(wav_save_path):
                 assert selections_table.View.iloc[0] == "Waveform 1"
                 assert selections_table.View.iloc[1] == "Spectrogram 1"

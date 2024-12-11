@@ -36,13 +36,13 @@ def parse_arguments() -> Dict:
         help="Use uncertain (q) selection tables (0 or 1)",
         default=1,
     )
-    parser.add_argument(
-        "-ckpt",
-        "--checkpoint",
-        type=int,
-        required=True,
-        help="Choose the model checkpoint",
-    )
+    # parser.add_argument(
+    #     "-ckpt",
+    #     "--checkpoint",
+    #     type=int,
+    #     required=True,
+    #     help="Choose the model checkpoint",
+    # )
     parser.add_argument(
         "-s",
         "--search",
@@ -162,7 +162,7 @@ def process_distance_file(
     hop_length: int,
     sample_rate: int,
     save_dir: str,
-    ckpt: int,
+    # ckpt: int,
     search: str,
     use_q: bool,
 ):
@@ -197,7 +197,7 @@ def process_distance_file(
         return
 
     wav_save_path = (
-        f"{save_dir}/Inference/{filename}/predictions_ckpt{ckpt}_{search}{q_suffix}.pkl"
+        f"{save_dir}/Inference/{filename}/predictions_{search}{q_suffix}.pkl"
     )
 
     if os.path.exists(wav_save_path):
@@ -299,7 +299,7 @@ if __name__ == "__main__":
         args = parse_arguments()
 
         use_q = True if args["use_q"] == 1 else False
-        ckpt = args["checkpoint"]
+        # ckpt = args["checkpoint"]
 
         config = load_config(f"configs/{args['config']}")
         logger.info(f"Loaded configuration from {args['config']}")
@@ -313,14 +313,14 @@ if __name__ == "__main__":
         search = args["search"]
         assert search in ["coarse", "fine"], "Search regime must be 'coarse' or 'fine'"
         prominence = sorted(
-            np.arange(config["detection"][search]["prominence"])
+            np.arange(*config["detection"][search]["prominence"])
         )  # Ensure ascending order
 
         prf1metrics = initialize_metrics(tolerance)
         logger.info(f"Initialized PRF1 metrics with tolerance levels: {tolerance}")
 
         wav_distances = sorted(
-            glob.glob(f"{save_dir}/Inference/*/distances_ckpt{ckpt}_{search}.pkl")
+            glob.glob(f"{save_dir}/Inference/*/distances_{search}.pkl")
         )
 
         if not wav_distances:
@@ -337,7 +337,7 @@ if __name__ == "__main__":
                 hop_length,
                 sample_rate,
                 save_dir,
-                ckpt,
+                # ckpt,
                 search,
                 use_q,
             )

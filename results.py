@@ -2,6 +2,7 @@ import argparse
 import glob
 import json
 import tqdm
+import os
 
 import numpy as np
 import pandas as pd
@@ -20,7 +21,6 @@ if __name__ == "__main__":
         help="use uncertain (q) selection tables (0 or 1)",
         default=0,
     )
-    parser.add_argument("-ckpt", "--checkpoint", type=int, help="choose the model ckpt")
     parser.add_argument(
         "-s",
         "--search",
@@ -46,7 +46,6 @@ if __name__ == "__main__":
     config = json.loads(data)
 
     save_dir = config["utils"]["save_dir"]
-    ckpt = args.checkpoint
     search = args.search
     assert search in ["coarse", "fine"]
 
@@ -69,10 +68,10 @@ if __name__ == "__main__":
         hpf = ""
 
     if use_q:
-        preds_str += f"predictions_ckpt{ckpt}_{search}*"
+        preds_str += f"predictions_{search}*"
         q = ".q"
     else:
-        preds_str += f"predictions_ckpt{ckpt}_{search}"
+        preds_str += f"predictions_{search}"
         q = ""
 
     prediction_tables = sorted(glob.glob(f"{save_dir}/Inference/*/{preds_str}.pkl"))
@@ -214,6 +213,8 @@ if __name__ == "__main__":
     results_table = results_table.assign(OnsetMetrics=total_onset_metrics)
     results_table = results_table.assign(MidpointMetrics=total_midpoint_metrics)
 
+    if not os.path.isdir(f"{save_dir}/Results"):
+        os.mkdir(f"{save_dir}/Results")
     results_table.to_pickle(
-        f"{save_dir}/Results/{energy}{hpf}results_ckpt{ckpt}_{search}{q}.pkl"
+        f"{save_dir}/Results/{energy}{hpf}results_{search}{q}.pkl"
     )
