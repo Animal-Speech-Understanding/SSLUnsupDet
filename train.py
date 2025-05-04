@@ -9,7 +9,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from torch import optim
 from torch.utils.data import DataLoader
 
-from dataset import SpermWhaleClicks
+from ssl_model.dataset import SpermWhaleClicksDataset
 from losses import NoiseContrastiveEstimationLoss
 from metrics import NoiseContrastiveEstimationMetric
 from models import SpectralBoundaryEncoder
@@ -47,23 +47,23 @@ def main():
     model_params = config["model"]
 
     # Initialize datasets
-    train_set = SpermWhaleClicks(
-        n_samples=dataset_params["train_samples"],
-        base_path=dataset_params["wavs_path"],
-        subset="train",
-        window=dataset_params["window"],
-        window_pad=dataset_params["window_pad"],
-        sample_rate=dataset_params["sample_rate"],
-        epsilon=dataset_params["epsilon"],
-        seed=dataset_params["seed"],
+    train_set = SpermWhaleClicksDataset(
+        n_samples = dataset_params["train_samples"],
+        base_path = dataset_params["wavs_path"],
+        subset = "train",
+        window_sec = dataset_params["window"],
+        pad_frames = dataset_params["window_pad"],
+        sample_rate = dataset_params["sample_rate"],
+        epsilon = dataset_params["epsilon"],
+        seed = dataset_params["seed"],
     )
 
-    val_set = SpermWhaleClicks(
+    val_set = SpermWhaleClicksDataset(
         n_samples=dataset_params["val_samples"],
         base_path=dataset_params["wavs_path"],
         subset="val",
-        window=dataset_params["window"],
-        window_pad=dataset_params["window_pad"],
+        window_sec=dataset_params["window"],
+        pad_frames=dataset_params["window_pad"],
         sample_rate=dataset_params["sample_rate"],
         epsilon=dataset_params["epsilon"],
         seed=dataset_params["seed"],
@@ -73,18 +73,15 @@ def main():
     train_loader = DataLoader(
         train_set,
         batch_size=training_params["batch_size"],
-        shuffle=True,
+        sampler=train_set.sampler,
         num_workers=4,
-        pin_memory=True,
         persistent_workers=True,
     )
 
     val_loader = DataLoader(
         val_set,
         batch_size=training_params["batch_size"],
-        shuffle=False,
         num_workers=4,
-        pin_memory=True,
         persistent_workers=True,
     )
 
