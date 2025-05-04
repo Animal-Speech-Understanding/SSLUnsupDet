@@ -10,11 +10,11 @@ from torch import optim
 from torch.utils.data import DataLoader
 
 from ssl_model.dataset import SpermWhaleClicksDataset
-from losses import NoiseContrastiveEstimationLoss
-from metrics import NoiseContrastiveEstimationMetric
+from ssl_model.losses import NoiseContrastiveEstimationLoss
+from ssl_model.metrics import NoiseContrastiveEstimationAccuracy
 from models import SpectralBoundaryEncoder
 from PyFire import SpectralBoundaryLightningModule
-from utils import seed_everything
+from ssl_model.utils import seed_everything
 
 
 def main():
@@ -132,21 +132,11 @@ def main():
 
     nce_loss = NoiseContrastiveEstimationLoss(n_negatives=n_negatives)
 
-    def loss_fx(z, targets):
-        preds = nce_loss.compute_preds(z)
-        loss = nce_loss.loss(preds)
-        return loss
-
     # Initialize metric function
-    nce_metric = NoiseContrastiveEstimationMetric()
+    nce_metric = NoiseContrastiveEstimationAccuracy()
 
-    def metric_fx(z, targets):
-        preds = nce_metric.compute_preds(z)
-        metric = nce_metric.metric(preds)
-        return metric
-
-    loss_funcs = {"NE Loss": loss_fx}
-    metric_funcs = {"NE Metric": metric_fx}
+    loss_funcs = {"NE Loss": nce_loss}
+    # metric_funcs = {"NE Metric": metric_fx}
 
     # Initialize Lightning Module
     lightning_module = SpectralBoundaryLightningModule(
@@ -156,7 +146,7 @@ def main():
         scheduler_cls=scheduler_cls,
         scheduler_params=scheduler_params,
         loss_funcs=loss_funcs,
-        metric_funcs=metric_funcs,
+        # metric_funcs=metric_funcs,
     )
 
     # Define Callbacks

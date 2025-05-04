@@ -92,7 +92,7 @@ class SpectralBoundaryLightningModule(pl.LightningModule):
         loss_dict = {}
         total_loss = 0.0
         for i, (key, loss_func) in enumerate(self.loss_funcs.items()):
-            loss = loss_func(outputs, targets) * self.multi_loss_weights[i]
+            loss = loss_func(outputs) * self.multi_loss_weights[i]
             loss_dict[key] = loss
             total_loss += loss
 
@@ -146,7 +146,7 @@ class SpectralBoundaryLightningModule(pl.LightningModule):
         loss_dict = {}
         total_loss = 0.0
         for i, (key, loss_func) in enumerate(self.loss_funcs.items()):
-            loss = loss_func(outputs, targets) * self.multi_loss_weights[i]
+            loss = loss_func(outputs) * self.multi_loss_weights[i]
             loss_dict[key] = loss
             total_loss += loss
 
