@@ -1,11 +1,11 @@
 {
     "dataset": {
         "window": 0.5,
-        "wavs_path": "../../data/wavs48khz/*.wav",
+        "wavs_path": "../../data/wavs48khz_dominica/*.wav",
         "sample_rate": 48000,
         "window_pad": 136,
-        "train_samples": 12500,
-        "val_samples": 3125,
+        "train_samples": 20000,
+        "val_samples": 5000,
         "seed": 42,
         "epsilon": 2e-6
     },
@@ -34,7 +34,7 @@
     "training": {
         "batch_size": 64,
         "epochs": 50,
-        "n_negatives": 2
+        "n_negatives": 4
     },
     "inference": {
         "coarse": {
@@ -62,6 +62,6 @@
         "coarsen": [0.005, 0.01, 0.02]
     },
     "utils": {
-        "save_dir": "Pipeline"
+        "save_dir": "dominica"
     }
 }

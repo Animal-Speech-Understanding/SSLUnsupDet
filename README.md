@@ -19,11 +19,11 @@
    Or skip and use `poetry run ...`
 2. Run:
    ```bash
-   python ssl/train.py -c pipeline.json
+   python ssl/train_emb.py -c pipeline.json
    ```
    or 
    ```bash
-   poetry run python ssl/train.py -c pipeline.json
+   poetry run python ssl/train_emb.py -c pipeline.json
    ```
 3. Check tensorboard in `Pipeline/logs`
 

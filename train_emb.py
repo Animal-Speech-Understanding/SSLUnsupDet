@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from ssl_model.dataset import SpermWhaleClicksDataset
 from ssl_model.losses import NoiseContrastiveEstimationLoss
 from ssl_model.models import SpectralBoundaryEncoder
-from trainer import SpectralBoundaryLightningModule
+from ssl_model.trainer import SpectralBoundaryLightningModule
 from ssl_model.utils import seed_everything
 
 
