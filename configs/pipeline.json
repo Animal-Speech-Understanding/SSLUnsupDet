@@ -10,36 +10,26 @@
         "epsilon": 2e-6
     },
     "model": {
-        "preprocess_params": {
-            "filter_params": {
-                "cutoff_freq": 3000,
-                "sample_rate": 48000,
-                "b": 0.08,
-                "ramp_duration": 0.002
-            }
+        "filter_params": {
+            "cutoff_freq": 3000,
+            "sample_rate": 48000
         },
-        "transform_params": {
-            "name": "conv1d",
-            "params": {
-                "encoder_name": "conv1d_layers",
-                "kernel_size": 136,
-                "stride": 48,
-                "affine": true,
-                "bias": true,
-                "out_channels": 128,
-                "center": false,
-                "double_channels": false,
-                "layers": null
-            }
+        "conv_transform_params": {
+            "in_channels": 1,
+            "layer_configs": [
+                [128, 8, 4, 0],
+                [128, 6, 3, 0],
+                [128, 4, 2, 0],
+                [128, 4, 2, 0]
+            ],
+            "use_bn": true,
+            "bias": true
         },
-        "postprocess_params":{
-            "mlp_params": {
-                "dropout": 0,
-                "out_dimension": 32,
-                "linear_projection":  true
-           },
-           "output_activation": "tanh"
-        }  
+        "mlp_params": {
+            "dropout": 0,
+            "out_dim": 32,
+            "layers":  []
+        }
     },
     "training": {
         "optimizer": {

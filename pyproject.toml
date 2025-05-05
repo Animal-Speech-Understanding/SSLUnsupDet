@@ -18,9 +18,9 @@ dependencies = [
     "pytorch-lightning (>=2.5.1.post0,<3.0.0)",
     "torchmetrics (>=1.7.1,<2.0.0)",
     "ipython (>=9.2.0,<10.0.0)",
-    "torchaudio (>=2.7.0,<3.0.0)",
     "google-cloud-storage (>=3.1.0,<4.0.0)",
     "torch (>=2.7.0,<3.0.0)",
+    "torchaudio (>=2.7.0,<3.0.0)",
 ]
 
 
@@ -41,3 +41,4 @@ priority = "explicit"
 
 [tool.poetry.dependencies]
 torch = {source = "pytorch-gpu"}
+torchaudio = {source = "pytorch-gpu"}
