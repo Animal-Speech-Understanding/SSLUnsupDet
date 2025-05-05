@@ -32,20 +32,9 @@
         }
     },
     "training": {
-        "optimizer": {
-            "name": "adam"
-        },
         "batch_size": 64,
         "epochs": 50,
-        "verbose": 1,
-        "device": "cuda",
-        "scheduler" : null,
-        "params": {
-            "model_saver_callback": {
-                "epoch": 1,
-                "save_every" : 1
-            }
-        }
+        "n_negatives": 2
     },
     "inference": {
         "coarse": {
@@ -66,14 +55,6 @@
         },
         "fine": {
             "prominence": [0.01, 0.21, 0.01]
-        }
-    },
-    "energy_baseline": {
-        "coarse": {
-            "prominence": [0.05, 0.8, 0.05]
-        },
-        "fine": {
-            "prominence": [0.001, 0.101, 0.001]
         }
     },
     "metrics" : {

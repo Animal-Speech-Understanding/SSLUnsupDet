@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from layers import MLP, HighPassFilter, ConvTransform
+from ssl_model.layers import MLP, HighPassFilter, ConvTransform
 
 
 class SpectralBoundaryEncoder(nn.Module):
