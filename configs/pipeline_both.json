@@ -1,17 +1,17 @@
 {
     "dataset": {
         "window": 0.5,
-        "wavs_path": "../../data/wavs48khz_dominica/*.wav",
+        "wavs_path": "../../data/wavs48khz_both/*.wav",
         "sample_rate": 48000,
         "window_pad": 136,
-        "train_samples": 20000,
-        "val_samples": 5000,
+        "train_samples": 12500,
+        "val_samples": 4000,
         "seed": 42,
         "epsilon": 2e-6
     },
     "model": {
         "filter_params": {
-            "cutoff_freq": 3000,
+            "cutoff_freq": 2000,
             "sample_rate": 48000
         },
         "conv_transform_params": {
@@ -28,13 +28,13 @@
         "mlp_params": {
             "dropout": 0,
             "out_dim": 32,
-            "layers":  []
+            "layers":  [64]
         }
     },
     "training": {
-        "batch_size": 64,
+        "batch_size": 128,
         "epochs": 50,
-        "n_negatives": 4
+        "n_negatives": 1
     },
     "inference": {
         "coarse": {
@@ -62,6 +62,6 @@
         "coarsen": [0.005, 0.01, 0.02]
     },
     "utils": {
-        "save_dir": "dominica"
+        "save_dir": "both"
     }
 }

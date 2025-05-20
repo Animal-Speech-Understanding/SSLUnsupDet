@@ -44,7 +44,7 @@ class MLP(nn.Module):
         in_dim: int,
         out_dim: Optional[int] = None,
         layers: Sequence[int] = (),
-        dropout: float = 0.5,
+        dropout: float = 0,
         activation: nn.Module = nn.LeakyReLU(),
     ):
         super().__init__()
@@ -76,7 +76,7 @@ class ConvTransform(nn.Module):
         layer_configs: Sequence[Tuple[int, int, int, int]] = ((64, 8, 4, 3),),
         use_bn: bool = True,
         activation: nn.Module = nn.LeakyReLU(),
-        bias: bool = False,
+        bias: bool = True,
     ):
         super().__init__()
 
@@ -86,8 +86,8 @@ class ConvTransform(nn.Module):
             modules.append(
                 nn.Conv1d(ch, out_ch, kernel_size=k, stride=s, padding=p, bias=bias)
             )
-            if use_bn:
-                modules.append(nn.BatchNorm1d(out_ch))
+            # if use_bn:
+            #     modules.append(nn.BatchNorm1d(out_ch, affine=bias))
             modules.append(activation)
             ch = out_ch
 

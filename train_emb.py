@@ -134,7 +134,7 @@ def main():
     trainer.fit(lightning_module, train_loader, val_loader)
 
     # Optionally, save the final model
-    final_model_path = os.path.join(save_dir, "models", "final_model.pt")
+    final_model_path = os.path.join(save_dir, "models", "final_model_v1.pt")
     os.makedirs(os.path.dirname(final_model_path), exist_ok=True)
     torch.save(lightning_module.model.state_dict(), final_model_path)
     print(f"Final model saved to {final_model_path}")
