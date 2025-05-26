@@ -1,0 +1,6 @@
+input_path: ../../lstm_embeddings.npz
+2d_output_path: 2d.png
+3d_output_path: 3d.png
+
+grid: True
+sample_size: 20000
